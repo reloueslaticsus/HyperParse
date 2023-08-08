@@ -8,15 +8,15 @@ typedef unsigned long long ull;
 
 enum class State {
   start = 0,
-
-  scheme_or_noscheme_or_rootless,
-  noscheme_or_rootless,
-  scheme_colon_or_rootless,
-  slash,
-  slash_slash_or_path,
-  authority_start,
-  authority_user_info,
-  host,
+  scheme_start,
+  scheme_colon,
+  relative_path,
+  relative_noscheme_or_empty,
+  relative_path_slash,
+  rootless_or_empty,
+  rootless_or_empty_path_slash,
+  slash_slash_or_relative_path,
+  authority_info,
   port,
   query,
   fragment,
@@ -28,6 +28,12 @@ enum class State {
 struct Error {
   State err;
   long long idx;
+};
+
+struct URIInfo {
+  ull scheme_index = -1;
+  ull authority_index = -1;
+  ull path_index = -1;
 };
 
 class Parser {
@@ -94,11 +100,26 @@ private:
     case State::start:
       std::cout << "start\n";
       break;
-    case State::scheme_colon_or_rootless:
-      std::cout << "schema colon or rootless\n";
+    case State::scheme_start:
+      std::cout << "schema start\n";
       break;
-    case State::scheme_or_noscheme_or_rootless:
-      std::cout << "scheme, noscheme, or rootless\n";
+    case State::relative_path:
+      std::cout << "relative path\n";
+      break;
+    case State::relative_path_slash:
+      std::cout << "relative path slash\n";
+      break;
+    case State::relative_noscheme_or_empty:
+      std::cout << "relative no scheme or empty\n";
+      break;
+    case State::slash_slash_or_relative_path:
+      std::cout << "slash slash or relative path\n";
+      break;
+    case State::rootless_or_empty:
+      std::cout << "rootless or empty\n";
+      break;
+    case State::rootless_or_empty_path_slash:
+      std::cout << "rootless or empty path slash\n";
       break;
     case State::fragment:
       std::cout << "fragment\n";
@@ -106,20 +127,8 @@ private:
     case State::query:
       std::cout << "query\n";
       break;
-    case State::host:
-      std::cout << "host\n";
-      break;
-    case State::slash:
-      std::cout << "slash\n";
-      break;
-    case State::slash_slash_or_path:
-      std::cout << "slash slash or path\n";
-      break;
-    case State::authority_start:
-      std::cout << "authority start\n";
-      break;
-    case State::authority_user_info:
-      std::cout << "authority user info\n";
+    case State::authority_info:
+      std::cout << "authority info\n";
       break;
     case State::path_segment:
       std::cout << "path segment\n";
@@ -130,8 +139,8 @@ private:
     case State::port:
       std::cout << "port\n";
       break;
-    case State::noscheme_or_rootless:
-      std::cout << "noscheme or rootless\n";
+    case State::scheme_colon:
+      std::cout << "scheme colon\n";
       break;
     default:
       std::cout << "unkown state\n";

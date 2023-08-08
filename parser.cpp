@@ -19,11 +19,11 @@ bool Parser::parseInput() {
 
     case State::start:
       if (isAlpha(c)) {
-        transitionState(State::scheme_or_noscheme_or_rootless);
-      } else if (pChar(c)) {
-        transitionState(State::noscheme_or_rootless);
+        transitionState(State::scheme_start);
+      } else if (pCharNoColon(c)) {
+        transitionState(State::relative_noscheme_or_empty);
       } else if (match('/', c)) {
-        transitionState(State::slash_slash_or_path);
+        transitionState(State::relative_path);
       } else if (match('?', c)) {
         transitionState(State::query);
       } else if (match('#', c)) {
@@ -33,32 +33,46 @@ bool Parser::parseInput() {
       }
       break;
 
-    case State::noscheme_or_rootless:
-      if (pChar(c) || pCharNoColon(c)) {
-        transitionState(State::noscheme_or_rootless);
+    case State::relative_noscheme_or_empty:
+      if (pCharNoColon(c)) {
+        transitionState(State::relative_noscheme_or_empty);
       } else if (match('/', c)) {
-        transitionState(State::slash_slash_or_path);
+        transitionState(State::relative_path_slash);
       } else {
         setError();
       }
       break;
 
-    case State::scheme_or_noscheme_or_rootless:
+    case State::rootless_or_empty:
+      if (pChar(c)) {
+        transitionState(State::rootless_or_empty);
+      } else if (match('/', c)) {
+        transitionState(State::rootless_or_empty_path_slash);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::scheme_start:
       if ((isAlphaDigit(c) || match('+', c) || match('-', c) ||
            match('.', c))) {
-        transitionState(State::scheme_or_noscheme_or_rootless);
+        transitionState(State::scheme_start);
       } else if (match(':', c)) {
-        transitionState(State::scheme_colon_or_rootless);
+        transitionState(State::scheme_colon);
+      } else if (pCharNoColon(c)) {
+        transitionState(State::relative_noscheme_or_empty);
+      } else if (match('/', c)) {
+        transitionState(State::slash_slash_or_relative_path);
       } else {
         setError();
       }
       break;
 
-    case State::scheme_colon_or_rootless:
+    case State::scheme_colon:
       if (match('/', c)) {
-        transitionState(State::slash_slash_or_path);
+        transitionState(State::slash_slash_or_relative_path);
       } else if (pChar(c)) {
-        transitionState(State::noscheme_or_rootless);
+        transitionState(State::rootless_or_empty);
       } else if (match('?', c)) {
         transitionState(State::query);
       } else if (match('#', c)) {
@@ -68,9 +82,10 @@ bool Parser::parseInput() {
       }
       break;
 
-    case State::slash_slash_or_path:
+    case State::relative_path:
+    case State::slash_slash_or_relative_path:
       if (match('/', c)) {
-        transitionState(State::authority_start);
+        transitionState(State::authority_info);
       } else if (pChar(c)) {
         transitionState(State::path_segment);
       } else {
@@ -78,40 +93,15 @@ bool Parser::parseInput() {
       }
       break;
 
-    case State::authority_start:
-      if (isUnreserved(c) || subDelims(c) || match(':', c) || isEscaped(c)) {
-        transitionState(State::authority_user_info);
-      } else if (match('[', c)) {
-        transitionState(State::host);
-      } else {
-        setError();
-      }
-      break;
-
-    case State::authority_user_info:
-      if (isUnreserved(c) || subDelims(c) || match(':', c) || isEscaped(c)) {
-        transitionState(State::authority_user_info);
-      } else if (match('@', c)) {
-        transitionState(State::host);
-      } else {
-        setError();
-      }
-      break;
-
-    case State::host:
-      if (match(']', c)) {
-        transitionState(State::port);
-      }
-      // eat everything in here for now...
-      break;
-
-    case State::port:
-      if (match('?', c)) {
+    case State::authority_info:
+      // eat everything for now, but this should be broken out.
+      if (isUnreserved(c) || subDelims(c) || isEscaped(c) || match(':', c) ||
+          match('@', c) || match('[', c) || match(']', c)) {
+        transitionState(State::authority_info);
+      } else if (match('?', c)) {
         transitionState(State::query);
       } else if (match('#', c)) {
         transitionState(State::fragment);
-      } else if (isDigit(c) || match(':', c)) {
-        transitionState(State::port);
       } else if (match('/', c)) {
         transitionState(State::path_segment_slash);
       } else {
@@ -119,7 +109,9 @@ bool Parser::parseInput() {
       }
       break;
 
+    case State::relative_path_slash:
     case State::path_segment_slash:
+    case State::rootless_or_empty_path_slash:
       if (pChar(c)) {
         transitionState(State::path_segment);
       } else {
