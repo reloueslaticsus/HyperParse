@@ -13,7 +13,7 @@ void Parser::parseInput() {
 
   while (idx < data.length()) {
     auto c = data[idx];
-    std::cout << c << std::endl;
+    std::cout << c;
 
     switch (parserState) {
 
