@@ -18,9 +18,9 @@ void Parser::parseInput() {
     switch (parserState) {
 
     case State::req_start:
-      if (match('G', c)) {
+      if (c == 'G') {
         transitionState(State::req_start_G);
-      } else if (match('P', c)) {
+      } else if (c == 'P') {
         transitionState(State::req_start_P);
       } else {
         setError();
@@ -28,7 +28,7 @@ void Parser::parseInput() {
       break;
 
     case State::req_start_G:
-      if (match('E', c)) {
+      if (c == 'E') {
         transitionState(State::req_start_GE);
       } else {
         setError();
@@ -36,7 +36,7 @@ void Parser::parseInput() {
       break;
 
     case State::req_start_GE:
-      if (match('T', c)) {
+      if (c == 'T') {
         transitionState(State::req_start_GET);
       } else {
         setError();
@@ -44,9 +44,9 @@ void Parser::parseInput() {
       break;
 
     case State::req_start_P:
-      if (match('U', c)) {
+      if (c == 'U') {
         transitionState(State::req_start_PU);
-      } else if (match('O', c)) {
+      } else if (c == 'O') {
         transitionState(State::req_start_PO);
       } else {
         setError();
@@ -54,7 +54,7 @@ void Parser::parseInput() {
       break;
 
     case State::req_start_PU:
-      if (match('T', c)) {
+      if (c == 'T') {
         transitionState(State::req_start_PUT);
       } else {
         setError();
@@ -62,7 +62,7 @@ void Parser::parseInput() {
       break;
 
     case State::req_start_PO:
-      if (match('S', c)) {
+      if (c == 'S') {
         transitionState(State::req_start_POS);
       } else {
         setError();
@@ -70,7 +70,7 @@ void Parser::parseInput() {
       break;
 
     case State::req_start_POS:
-      if (match('T', c)) {
+      if (c == 'T') {
         transitionState(State::req_start_POST);
       } else {
         setError();
@@ -81,7 +81,7 @@ void Parser::parseInput() {
     case State::req_start_POST:
     case State::req_start_PUT:
     case State::space:
-      if (match(' ', c)) {
+      if (c == ' ') {
         transitionState(State::space);
       } else {
         transitionState(State::req_uri_start);
@@ -93,11 +93,11 @@ void Parser::parseInput() {
         transitionState(State::req_uri_scheme_start);
       } else if (pCharNoColon(c)) {
         transitionState(State::req_uri_relative_noscheme_or_empty);
-      } else if (match('/', c)) {
+      } else if (c == '/') {
         transitionState(State::req_uri_relative_path);
-      } else if (match('?', c)) {
+      } else if (c == '?') {
         transitionState(State::req_uri_query);
-      } else if (match('#', c)) {
+      } else if (c == '#') {
         transitionState(State::req_uri_fragment);
       } else {
         setError();
@@ -107,7 +107,7 @@ void Parser::parseInput() {
     case State::req_uri_relative_noscheme_or_empty:
       if (pCharNoColon(c)) {
         transitionState(State::req_uri_relative_noscheme_or_empty);
-      } else if (match('/', c)) {
+      } else if (c == '/') {
         transitionState(State::req_uri_relative_path_slash);
       } else {
         setError();
@@ -117,7 +117,7 @@ void Parser::parseInput() {
     case State::req_uri_rootless_or_empty:
       if (pChar(c)) {
         transitionState(State::req_uri_rootless_or_empty);
-      } else if (match('/', c)) {
+      } else if (c == '/') {
         transitionState(State::req_uri_rootless_or_empty_path_slash);
       } else {
         setError();
@@ -125,14 +125,13 @@ void Parser::parseInput() {
       break;
 
     case State::req_uri_scheme_start:
-      if ((isAlphaDigit(c) || match('+', c) || match('-', c) ||
-           match('.', c))) {
+      if ((isAlphaDigit(c) || c == '+' || c == '-' || c == '.')) {
         transitionState(State::req_uri_scheme_start);
-      } else if (match(':', c)) {
+      } else if (c == ':') {
         transitionState(State::req_uri_scheme_colon);
       } else if (pCharNoColon(c)) {
         transitionState(State::req_uri_relative_noscheme_or_empty);
-      } else if (match('/', c)) {
+      } else if (c == '/') {
         transitionState(State::req_uri_slash_slash_or_relative_path);
       } else {
         setError();
@@ -140,13 +139,13 @@ void Parser::parseInput() {
       break;
 
     case State::req_uri_scheme_colon:
-      if (match('/', c)) {
+      if (c == '/') {
         transitionState(State::req_uri_slash_slash_or_relative_path);
       } else if (pChar(c)) {
         transitionState(State::req_uri_rootless_or_empty);
-      } else if (match('?', c)) {
+      } else if (c == '?') {
         transitionState(State::req_uri_query);
-      } else if (match('#', c)) {
+      } else if (c == '#') {
         transitionState(State::req_uri_fragment);
       } else {
         setError();
@@ -155,7 +154,7 @@ void Parser::parseInput() {
 
     case State::req_uri_relative_path:
     case State::req_uri_slash_slash_or_relative_path:
-      if (match('/', c)) {
+      if (c == '/') {
         transitionState(State::req_uri_authority_info);
       } else if (pChar(c)) {
         transitionState(State::req_uri_path_segment);
@@ -166,14 +165,14 @@ void Parser::parseInput() {
 
     case State::req_uri_authority_info:
       // we let the user of the parser further parse out authority
-      if (isUnreserved(c) || subDelims(c) || isEscaped(c) || match(':', c) ||
-          match('@', c) || match('[', c) || match(']', c)) {
+      if (isUnreserved(c) || subDelims(c) || isEscaped(c) || c == ':' ||
+          c == '@' || c == '[' || c == ']') {
         transitionState(State::req_uri_authority_info);
-      } else if (match('?', c)) {
+      } else if (c == '?') {
         transitionState(State::req_uri_query);
-      } else if (match('#', c)) {
+      } else if (c == '#') {
         transitionState(State::req_uri_fragment);
-      } else if (match('/', c)) {
+      } else if (c == '/') {
         transitionState(State::req_uri_path_segment_slash);
       } else {
         setError();
@@ -193,11 +192,11 @@ void Parser::parseInput() {
     case State::req_uri_path_segment:
       if (pChar(c)) {
         transitionState(State::req_uri_path_segment);
-      } else if (match('/', c)) {
+      } else if (c == '/') {
         transitionState(State::req_uri_path_segment_slash);
-      } else if (match('?', c)) {
+      } else if (c == '?') {
         transitionState(State::req_uri_query);
-      } else if (match('#', c)) {
+      } else if (c == '#') {
         transitionState(State::req_uri_fragment);
       } else {
         setError();
@@ -205,9 +204,9 @@ void Parser::parseInput() {
       break;
 
     case State::req_uri_query:
-      if (match('?', c) || match('/', c) || pChar(c)) {
+      if (c == '?' || c == '/' || pChar(c)) {
         transitionState(State::req_uri_query);
-      } else if (match('#', c)) {
+      } else if (c == '#') {
         transitionState(State::req_uri_fragment);
       } else {
         setError();
@@ -215,7 +214,7 @@ void Parser::parseInput() {
       break;
 
     case State::req_uri_fragment:
-      if (match('?', c) || match('/', c) || pChar(c)) {
+      if (c == '?' || c == '/' || pChar(c)) {
         transitionState(State::req_uri_fragment);
       } else {
         setError();

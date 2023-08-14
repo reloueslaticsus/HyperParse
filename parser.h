@@ -121,8 +121,6 @@ public:
   }
 
 private:
-  inline bool match(const char &f, const char &s) { return f == s; }
-
   inline bool isLowerAlpha(const char &f) { return f >= 97 && f <= 122; }
 
   inline bool isUpperAlpha(const char &f) { return f >= 65 && f <= 90; }
@@ -174,7 +172,7 @@ private:
 
   inline bool pCharNoColon(const char &f) { return pChar(f) && f != ':'; }
 
-  void transitionState(State s2) { parserState = s2; }
+  void transitionState(State nextState) { parserState = nextState; }
 
   inline void setError() {
     error.err = parserState;
