@@ -172,7 +172,7 @@ private:
 
   inline bool pCharNoColon(const char &f) { return pChar(f) && f != ':'; }
 
-  void transitionState(State nextState) { parserState = nextState; }
+  inline void transitionState(State nextState) { parserState = nextState; }
 
   inline void setError() {
     error.err = parserState;
