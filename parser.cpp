@@ -128,6 +128,8 @@ void Parser::parseInput() {
       if ((isAlphaDigit(c) || c == '+' || c == '-' || c == '.')) {
         transitionState(State::req_uri_scheme_start);
       } else if (c == ':') {
+        info.scheme_start_index = 0;
+        info.scheme_end_index = idx - 1;
         transitionState(State::req_uri_scheme_colon);
       } else if (pCharNoColon(c)) {
         transitionState(State::req_uri_relative_noscheme_or_empty);
@@ -155,6 +157,7 @@ void Parser::parseInput() {
     case State::req_uri_relative_path:
     case State::req_uri_slash_slash_or_relative_path:
       if (c == '/') {
+        authority_start_index = idx + 1;
         transitionState(State::req_uri_authority_info);
       } else if (pChar(c)) {
         transitionState(State::req_uri_path_segment);
@@ -169,10 +172,13 @@ void Parser::parseInput() {
           c == '@' || c == '[' || c == ']') {
         transitionState(State::req_uri_authority_info);
       } else if (c == '?') {
+        authority_end_index = idx - 1;
         transitionState(State::req_uri_query);
       } else if (c == '#') {
+        authority_end_index = idx - 1;
         transitionState(State::req_uri_fragment);
       } else if (c == '/') {
+        authority_end_index = idx - 1;
         transitionState(State::req_uri_path_segment_slash);
       } else {
         setError();

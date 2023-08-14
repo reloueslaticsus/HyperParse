@@ -53,14 +53,18 @@ enum class State {
 };
 
 struct Error {
-  State err;
-  long long idx;
+  State err{req_start};
+  long long idx{-1};
 };
 
 struct URIInfo {
-  ull scheme_index = -1;
-  ull authority_index = -1;
-  ull path_index = -1;
+  ull scheme_start_index{-1};
+  ull scheme_end_index{-1};
+  ull authority_start_index{-1};
+  ull authority_end_index{-1};
+  ull path_index{-1};
+  ull fragment_index{-1};
+  std::vector<ull> params;
 };
 
 class Parser {
@@ -182,7 +186,8 @@ private:
   void parseInput();
 
   std::string data;
-  Error error{State::req_start, -1};
+  Error error;
+  URIInfo info;
   State parserState;
   ull idx;
 };
