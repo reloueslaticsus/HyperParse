@@ -5,7 +5,7 @@ Parser::Parser() { std::cout << "Created HTTP parser!!!\n"; }
 bool Parser::parse(const std::string &data) {
   this->data = std::move(data);
   this->idx = 0;
-  this->parserState = State::start;
+  this->parserState = State::req_start;
   return parseInput();
 }
 
@@ -17,135 +17,206 @@ bool Parser::parseInput() {
 
     switch (parserState) {
 
-    case State::start:
+    case State::req_start:
+      if (match('G', c)) {
+        transitionState(State::req_start_G);
+      } else if (match('P', c)) {
+        transitionState(State::req_start_P);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::req_start_G:
+      if (match('E', c)) {
+        transitionState(State::req_start_GE);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::req_start_GE:
+      if (match('T', c)) {
+        transitionState(State::req_start_GET);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::req_start_P:
+      if (match('U', c)) {
+        transitionState(State::req_start_PU);
+      } else if (match('O', c)) {
+        transitionState(State::req_start_PO);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::req_start_PU:
+      if (match('T', c)) {
+        transitionState(State::req_start_PUT);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::req_start_PO:
+      if (match('S', c)) {
+        transitionState(State::req_start_POS);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::req_start_POS:
+      if (match('T', c)) {
+        transitionState(State::req_start_POST);
+      } else {
+        setError();
+      }
+      break;
+
+    case State::req_start_GET:
+    case State::req_start_POST:
+    case State::req_start_PUT:
+    case State::space:
+      if (match(' ', c)) {
+        transitionState(State::space);
+      } else {
+        transitionState(State::req_uri_start);
+      }
+      break;
+
+    case State::req_uri_start:
       if (isAlpha(c)) {
-        transitionState(State::scheme_start);
+        transitionState(State::req_uri_scheme_start);
       } else if (pCharNoColon(c)) {
-        transitionState(State::relative_noscheme_or_empty);
+        transitionState(State::req_uri_relative_noscheme_or_empty);
       } else if (match('/', c)) {
-        transitionState(State::relative_path);
+        transitionState(State::req_uri_relative_path);
       } else if (match('?', c)) {
-        transitionState(State::query);
+        transitionState(State::req_uri_query);
       } else if (match('#', c)) {
-        transitionState(State::fragment);
+        transitionState(State::req_uri_fragment);
       } else {
         setError();
       }
       break;
 
-    case State::relative_noscheme_or_empty:
+    case State::req_uri_relative_noscheme_or_empty:
       if (pCharNoColon(c)) {
-        transitionState(State::relative_noscheme_or_empty);
+        transitionState(State::req_uri_relative_noscheme_or_empty);
       } else if (match('/', c)) {
-        transitionState(State::relative_path_slash);
+        transitionState(State::req_uri_relative_path_slash);
       } else {
         setError();
       }
       break;
 
-    case State::rootless_or_empty:
+    case State::req_uri_rootless_or_empty:
       if (pChar(c)) {
-        transitionState(State::rootless_or_empty);
+        transitionState(State::req_uri_rootless_or_empty);
       } else if (match('/', c)) {
-        transitionState(State::rootless_or_empty_path_slash);
+        transitionState(State::req_uri_rootless_or_empty_path_slash);
       } else {
         setError();
       }
       break;
 
-    case State::scheme_start:
+    case State::req_uri_scheme_start:
       if ((isAlphaDigit(c) || match('+', c) || match('-', c) ||
            match('.', c))) {
-        transitionState(State::scheme_start);
+        transitionState(State::req_uri_scheme_start);
       } else if (match(':', c)) {
-        transitionState(State::scheme_colon);
+        transitionState(State::req_uri_scheme_colon);
       } else if (pCharNoColon(c)) {
-        transitionState(State::relative_noscheme_or_empty);
+        transitionState(State::req_uri_relative_noscheme_or_empty);
       } else if (match('/', c)) {
-        transitionState(State::slash_slash_or_relative_path);
+        transitionState(State::req_uri_slash_slash_or_relative_path);
       } else {
         setError();
       }
       break;
 
-    case State::scheme_colon:
+    case State::req_uri_scheme_colon:
       if (match('/', c)) {
-        transitionState(State::slash_slash_or_relative_path);
+        transitionState(State::req_uri_slash_slash_or_relative_path);
       } else if (pChar(c)) {
-        transitionState(State::rootless_or_empty);
+        transitionState(State::req_uri_rootless_or_empty);
       } else if (match('?', c)) {
-        transitionState(State::query);
+        transitionState(State::req_uri_query);
       } else if (match('#', c)) {
-        transitionState(State::fragment);
+        transitionState(State::req_uri_fragment);
       } else {
         setError();
       }
       break;
 
-    case State::relative_path:
-    case State::slash_slash_or_relative_path:
+    case State::req_uri_relative_path:
+    case State::req_uri_slash_slash_or_relative_path:
       if (match('/', c)) {
-        transitionState(State::authority_info);
+        transitionState(State::req_uri_authority_info);
       } else if (pChar(c)) {
-        transitionState(State::path_segment);
+        transitionState(State::req_uri_path_segment);
       } else {
         setError();
       }
       break;
 
-    case State::authority_info:
-      // eat everything for now, but this should be broken out.
+    case State::req_uri_authority_info:
+      // we let the user of the parser further parse out authority
       if (isUnreserved(c) || subDelims(c) || isEscaped(c) || match(':', c) ||
           match('@', c) || match('[', c) || match(']', c)) {
-        transitionState(State::authority_info);
+        transitionState(State::req_uri_authority_info);
       } else if (match('?', c)) {
-        transitionState(State::query);
+        transitionState(State::req_uri_query);
       } else if (match('#', c)) {
-        transitionState(State::fragment);
+        transitionState(State::req_uri_fragment);
       } else if (match('/', c)) {
-        transitionState(State::path_segment_slash);
+        transitionState(State::req_uri_path_segment_slash);
       } else {
         setError();
       }
       break;
 
-    case State::relative_path_slash:
-    case State::path_segment_slash:
-    case State::rootless_or_empty_path_slash:
+    case State::req_uri_relative_path_slash:
+    case State::req_uri_path_segment_slash:
+    case State::req_uri_rootless_or_empty_path_slash:
       if (pChar(c)) {
-        transitionState(State::path_segment);
+        transitionState(State::req_uri_path_segment);
       } else {
         setError();
       }
       break;
 
-    case State::path_segment:
+    case State::req_uri_path_segment:
       if (pChar(c)) {
-        transitionState(State::path_segment);
+        transitionState(State::req_uri_path_segment);
       } else if (match('/', c)) {
-        transitionState(State::path_segment_slash);
+        transitionState(State::req_uri_path_segment_slash);
       } else if (match('?', c)) {
-        transitionState(State::query);
+        transitionState(State::req_uri_query);
       } else if (match('#', c)) {
-        transitionState(State::fragment);
+        transitionState(State::req_uri_fragment);
       } else {
         setError();
       }
       break;
 
-    case State::query:
+    case State::req_uri_query:
       if (match('?', c) || match('/', c) || pChar(c)) {
-        transitionState(State::query);
+        transitionState(State::req_uri_query);
       } else if (match('#', c)) {
-        transitionState(State::fragment);
+        transitionState(State::req_uri_fragment);
       } else {
         setError();
       }
       break;
 
-    case State::fragment:
+    case State::req_uri_fragment:
       if (match('?', c) || match('/', c) || pChar(c)) {
-        transitionState(State::fragment);
+        transitionState(State::req_uri_fragment);
       } else {
         setError();
       }
@@ -158,5 +229,5 @@ bool Parser::parseInput() {
     }
     idx++;
   }
-  return error.err == State::start;
+  return error.err == State::req_start;
 }

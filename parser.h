@@ -7,21 +7,48 @@
 typedef unsigned long long ull;
 
 enum class State {
-  start = 0,
-  scheme_start,
-  scheme_colon,
-  relative_path,
-  relative_noscheme_or_empty,
-  relative_path_slash,
-  rootless_or_empty,
-  rootless_or_empty_path_slash,
-  slash_slash_or_relative_path,
-  authority_info,
-  port,
-  query,
-  fragment,
-  path_segment_slash,
-  path_segment
+
+  trash_state = 0,
+  req_start,
+  // request type
+  req_start_G,
+  req_start_GE,
+  req_start_GET,
+  req_start_P,
+  req_start_PU,
+  req_start_PUT,
+  req_start_PO,
+  req_start_POS,
+  req_start_POST,
+
+  space,
+
+  // uri
+  req_uri_start,
+  req_uri_scheme_start,
+  req_uri_scheme_colon,
+  req_uri_relative_path,
+  req_uri_relative_noscheme_or_empty,
+  req_uri_relative_path_slash,
+  req_uri_rootless_or_empty,
+  req_uri_rootless_or_empty_path_slash,
+  req_uri_slash_slash_or_relative_path,
+  req_uri_authority_info,
+  req_uri_port,
+  req_uri_query,
+  req_uri_fragment,
+  req_uri_path_segment_slash,
+  req_uri_path_segment,
+
+  // http version
+  req_http_version_H,
+  req_http_verison_T,
+  req_http_version_T,
+  req_http_version_P,
+  req_http_version_slash,
+  req_http_version_major,
+  req_http_version_dot,
+  req_http_version_minor,
 
 };
 
@@ -97,49 +124,49 @@ private:
 
   void printState() {
     switch (parserState) {
-    case State::start:
+    case State::req_uri_start:
       std::cout << "start\n";
       break;
-    case State::scheme_start:
+    case State::req_uri_scheme_start:
       std::cout << "schema start\n";
       break;
-    case State::relative_path:
+    case State::req_uri_relative_path:
       std::cout << "relative path\n";
       break;
-    case State::relative_path_slash:
+    case State::req_uri_relative_path_slash:
       std::cout << "relative path slash\n";
       break;
-    case State::relative_noscheme_or_empty:
+    case State::req_uri_relative_noscheme_or_empty:
       std::cout << "relative no scheme or empty\n";
       break;
-    case State::slash_slash_or_relative_path:
+    case State::req_uri_slash_slash_or_relative_path:
       std::cout << "slash slash or relative path\n";
       break;
-    case State::rootless_or_empty:
+    case State::req_uri_rootless_or_empty:
       std::cout << "rootless or empty\n";
       break;
-    case State::rootless_or_empty_path_slash:
+    case State::req_uri_rootless_or_empty_path_slash:
       std::cout << "rootless or empty path slash\n";
       break;
-    case State::fragment:
+    case State::req_uri_fragment:
       std::cout << "fragment\n";
       break;
-    case State::query:
+    case State::req_uri_query:
       std::cout << "query\n";
       break;
-    case State::authority_info:
+    case State::req_uri_authority_info:
       std::cout << "authority info\n";
       break;
-    case State::path_segment:
+    case State::req_uri_path_segment:
       std::cout << "path segment\n";
       break;
-    case State::path_segment_slash:
+    case State::req_uri_path_segment_slash:
       std::cout << "path segment slash\n";
       break;
-    case State::port:
+    case State::req_uri_port:
       std::cout << "port\n";
       break;
-    case State::scheme_colon:
+    case State::req_uri_scheme_colon:
       std::cout << "scheme colon\n";
       break;
     default:
@@ -161,7 +188,7 @@ private:
   bool parseInput();
 
   std::string data;
-  Error error{State::start, -1};
+  Error error{State::req_start, -1};
   State parserState;
   ull idx;
 };
