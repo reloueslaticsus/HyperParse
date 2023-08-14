@@ -2,14 +2,14 @@
 
 Parser::Parser() { std::cout << "Created HTTP parser!!!\n"; }
 
-bool Parser::parse(const std::string &data) {
+void Parser::parse(const std::string &data) {
   this->data = std::move(data);
   this->idx = 0;
   this->parserState = State::req_start;
-  return parseInput();
+  parseInput();
 }
 
-bool Parser::parseInput() {
+void Parser::parseInput() {
 
   while (idx < data.length()) {
     auto c = data[idx];
@@ -226,8 +226,11 @@ bool Parser::parseInput() {
 
     if (error.idx != -1) {
       std::cout << "had error at index: " << error.idx << std::endl;
+      std::cout << "Error in state: ";
+      printState();
+      break;
     }
+
     idx++;
   }
-  return error.err == State::req_start;
 }

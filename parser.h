@@ -66,7 +66,59 @@ struct URIInfo {
 class Parser {
 public:
   Parser();
-  bool parse(const std::string &data);
+  void parse(const std::string &data);
+  void printState() {
+    switch (parserState) {
+    case State::req_uri_start:
+      std::cout << "start\n";
+      break;
+    case State::req_uri_scheme_start:
+      std::cout << "schema start\n";
+      break;
+    case State::req_uri_relative_path:
+      std::cout << "relative path\n";
+      break;
+    case State::req_uri_relative_path_slash:
+      std::cout << "relative path slash\n";
+      break;
+    case State::req_uri_relative_noscheme_or_empty:
+      std::cout << "relative no scheme or empty\n";
+      break;
+    case State::req_uri_slash_slash_or_relative_path:
+      std::cout << "slash slash or relative path\n";
+      break;
+    case State::req_uri_rootless_or_empty:
+      std::cout << "rootless or empty\n";
+      break;
+    case State::req_uri_rootless_or_empty_path_slash:
+      std::cout << "rootless or empty path slash\n";
+      break;
+    case State::req_uri_fragment:
+      std::cout << "fragment\n";
+      break;
+    case State::req_uri_query:
+      std::cout << "query\n";
+      break;
+    case State::req_uri_authority_info:
+      std::cout << "authority info\n";
+      break;
+    case State::req_uri_path_segment:
+      std::cout << "path segment\n";
+      break;
+    case State::req_uri_path_segment_slash:
+      std::cout << "path segment slash\n";
+      break;
+    case State::req_uri_port:
+      std::cout << "port\n";
+      break;
+    case State::req_uri_scheme_colon:
+      std::cout << "scheme colon\n";
+      break;
+    default:
+      std::cout << "unkown state\n";
+      break;
+    }
+  }
 
 private:
   inline bool match(const char &f, const char &s) { return f == s; }
@@ -122,70 +174,14 @@ private:
 
   inline bool pCharNoColon(const char &f) { return pChar(f) && f != ':'; }
 
-  void printState() {
-    switch (parserState) {
-    case State::req_uri_start:
-      std::cout << "start\n";
-      break;
-    case State::req_uri_scheme_start:
-      std::cout << "schema start\n";
-      break;
-    case State::req_uri_relative_path:
-      std::cout << "relative path\n";
-      break;
-    case State::req_uri_relative_path_slash:
-      std::cout << "relative path slash\n";
-      break;
-    case State::req_uri_relative_noscheme_or_empty:
-      std::cout << "relative no scheme or empty\n";
-      break;
-    case State::req_uri_slash_slash_or_relative_path:
-      std::cout << "slash slash or relative path\n";
-      break;
-    case State::req_uri_rootless_or_empty:
-      std::cout << "rootless or empty\n";
-      break;
-    case State::req_uri_rootless_or_empty_path_slash:
-      std::cout << "rootless or empty path slash\n";
-      break;
-    case State::req_uri_fragment:
-      std::cout << "fragment\n";
-      break;
-    case State::req_uri_query:
-      std::cout << "query\n";
-      break;
-    case State::req_uri_authority_info:
-      std::cout << "authority info\n";
-      break;
-    case State::req_uri_path_segment:
-      std::cout << "path segment\n";
-      break;
-    case State::req_uri_path_segment_slash:
-      std::cout << "path segment slash\n";
-      break;
-    case State::req_uri_port:
-      std::cout << "port\n";
-      break;
-    case State::req_uri_scheme_colon:
-      std::cout << "scheme colon\n";
-      break;
-    default:
-      std::cout << "unkown state\n";
-      break;
-    }
-  }
-
-  void transitionState(State s2) {
-    parserState = s2;
-    printState();
-  }
+  void transitionState(State s2) { parserState = s2; }
 
   inline void setError() {
     error.err = parserState;
     error.idx = idx;
   }
 
-  bool parseInput();
+  void parseInput();
 
   std::string data;
   Error error{State::req_start, -1};
